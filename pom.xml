@@ -117,6 +117,20 @@
 			</snapshots>
 		</repository>
 	</repositories>
+	<pluginRepositories>
+    <pluginRepository>
+        <id>maven.gentics.com</id>
+        <name>Gentics Maven Repository</name>
+        <url>https://maven.gentics.com/maven2</url>
+        <layout>default</layout>
+        <releases>
+            <enabled>true</enabled>
+        </releases>
+        <snapshots>
+            <enabled>true</enabled>
+        </snapshots>
+    </pluginRepository>
+</pluginRepositories>
 	<distributionManagement>
 		<repository>
 			<id>archiva.lan.public_releases</id>

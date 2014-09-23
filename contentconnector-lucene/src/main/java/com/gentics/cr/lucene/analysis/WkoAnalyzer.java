@@ -46,6 +46,15 @@ public class WkoAnalyzer extends Analyzer {
 						buffer[i] = 's';
 						length++;
 						break;
+					case '@':
+						buffer[i++] = 't';
+						buffer = termAtt.resizeBuffer(1 + length);
+						if (i < length) {
+							System.arraycopy(buffer, i, buffer, i + 1, (length - i));
+						} 
+						buffer[i] = 'a';
+						length++;
+						break;
 					default:
 					}
 				}
