@@ -167,6 +167,8 @@ public class SynonymIndexJob extends AbstractUpdateCheckerJob {
 				// optimize the writer
 				log.debug("Number of indexed Synonyms finished: " + synonymWriter.numDocs());
 				synonymAccessor.release(synonymWriter);
+				synonym.getSynonymLocation().createReopenFile();
+				synonymAccessor.reopen();
 			}
 	
 			log.debug("Finished reindexing synonym index.");

@@ -60,6 +60,7 @@ public class SynonymIndexDeleteJob extends AbstractUpdateCheckerJob {
 			writer.deleteAll();
 			writer.commit();			
 			indexLocation.createReopenFile();
+			accessor.reopen();
 			synonym.getSynonymLocation().resetIndexJobCreationTimes();
 		} catch (IOException e) {
 			log.error("Could not clear extension-index", e);
