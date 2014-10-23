@@ -12,8 +12,8 @@ import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
@@ -183,11 +183,12 @@ public class SynonymQueryParser extends CRQueryParser {
 			crconfig = newConf;
 		}
 
+
 		LuceneIndexLocation synonymLocation = LuceneIndexLocation
 				.getIndexLocation(crconfig);
 		ia = synonymLocation.getAccessor();
 		synonymSearcher = (IndexSearcher) ia.getPrioritizedSearcher();
-		synonymReader = ia.getReader(false);
+		synonymReader = ia.getReader();
 
 		try {
 			String subquery = query;
@@ -294,7 +295,7 @@ public class SynonymQueryParser extends CRQueryParser {
 			return query;
 		} finally {
 			ia.release(synonymSearcher);
-			ia.release(synonymReader, false);
+			ia.release(synonymReader);
 		}
 
 		return query;

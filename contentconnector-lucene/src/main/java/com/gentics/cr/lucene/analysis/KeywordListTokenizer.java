@@ -2,11 +2,14 @@ package com.gentics.cr.lucene.analysis;
 
 import java.io.Reader;
 
-import org.apache.lucene.analysis.CharTokenizer;
+import org.apache.lucene.analysis.util.CharTokenizer;
+import org.apache.lucene.util.AttributeFactory;
 import org.apache.lucene.util.AttributeSource;
 
+import com.gentics.cr.lucene.LuceneVersion;
+
 /**
- * Emits the entire input as a single token.
+ * Tokenizes only by new lines
  */
 public final class KeywordListTokenizer extends CharTokenizer {
 
@@ -15,7 +18,7 @@ public final class KeywordListTokenizer extends CharTokenizer {
 	 * @param input input
 	 */
 	public KeywordListTokenizer(final Reader input) {
-		super(input);
+		super(LuceneVersion.getVersion(), input);
 	}
 
 	/**
@@ -24,7 +27,7 @@ public final class KeywordListTokenizer extends CharTokenizer {
 	 * @param input input
 	 */
 	public KeywordListTokenizer(final AttributeSource source, final Reader input) {
-		super(source, input);
+		super(LuceneVersion.getVersion(),input);
 	}
 
 	/**
@@ -33,20 +36,12 @@ public final class KeywordListTokenizer extends CharTokenizer {
 	 * @param input input
 	 */
 	public KeywordListTokenizer(final AttributeFactory factory, final Reader input) {
-		super(factory, input);
+		super(LuceneVersion.getVersion(),factory, input);
 	}
+
 
 	@Override
-	protected boolean isTokenChar(final char c) {
-		return !isSeparator(c);
-	}
-
-	/**
-	 * isSeperator.
-	 * @param c character
-	 * @return true if seperator.
-	 */
-	private boolean isSeparator(final char c) {
-		return '\n' == c;
+	protected boolean isTokenChar(int character) {
+		return character != '\n';
 	}
 }

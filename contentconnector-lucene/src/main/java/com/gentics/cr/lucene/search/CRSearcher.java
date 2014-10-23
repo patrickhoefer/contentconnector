@@ -18,13 +18,16 @@ import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.facet.search.FacetsCollector;
+import org.apache.lucene.facet.FacetsCollector;
 import org.apache.lucene.facet.taxonomy.TaxonomyReader;
+import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermEnum;
-import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.index.Terms;
+import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.Filter;
@@ -203,7 +206,7 @@ public class CRSearcher {
 	 * @return
 	 * @throws IOException
 	 */
-	TopDocsCollector<?> createCollector(final IndexSearcher searcher, final int hits, final String[] sorting, final boolean computescores,
+	TopDocsCollector<?> createCollector(final CRRequest request, final IndexSearcher searcher, final int hits, final String[] sorting, final boolean computescores,
 			final String[] userPermissions) throws IOException {
 		TopDocsCollector<?> coll = null;
 		String collectorClassName = (String) config.get(COLLECTOR_CLASS_KEY);
@@ -212,10 +215,13 @@ public class CRSearcher {
 			try {
 				genericCollectorClass = Class.forName(collectorClassName);
 				GenericConfiguration collectorConfiguration = config.getSubConfigs().get(COLLECTOR_CONFIG_KEY.toUpperCase());
-				Object[][] prioritizedParameters = new Object[3][];
-				prioritizedParameters[0] = new Object[] { searcher, hits, collectorConfiguration, userPermissions };
-				prioritizedParameters[1] = new Object[] { searcher, hits, collectorConfiguration };
-				prioritizedParameters[2] = new Object[] { hits, collectorConfiguration };
+				Object[][] prioritizedParameters = new Object[6][];
+				prioritizedParameters[0] = new Object[] { createSort(sorting), searcher, hits, collectorConfiguration };
+				prioritizedParameters[1] = new Object[] { searcher, hits, collectorConfiguration, userPermissions };
+				prioritizedParameters[2] = new Object[] { searcher, hits, collectorConfiguration };
+				prioritizedParameters[3] = new Object[] { hits, collectorConfiguration };
+				prioritizedParameters[4] = new Object[]	{ request, createSort(sorting), searcher, hits, collectorConfiguration };
+				prioritizedParameters[5] = new Object[] { request, searcher, hits, collectorConfiguration };
 				Object collectorObject = Instanciator.getInstance(genericCollectorClass, prioritizedParameters);
 				if (collectorObject instanceof TopDocsCollector) {
 					coll = (TopDocsCollector<?>) collectorObject;
@@ -247,6 +253,9 @@ public class CRSearcher {
 	 */
 	private Sort createSort(final String[] sorting) {
 		Sort ret = null;
+		if (sorting == null) {
+			return null;
+		}
 		ArrayList<SortField> sortFields = new ArrayList<SortField>();
 		for (String s : sorting) {
 			// split attribute on :. First element is attribute name the
@@ -263,7 +272,7 @@ public class CRSearcher {
 				if ("score".equalsIgnoreCase(sort[0])) {
 					sortFields.add(SortField.FIELD_SCORE);
 				} else {
-					sortFields.add(new SortField(sort[0], Locale.getDefault(), reverse));
+					sortFields.add(new SortField(sort[0], SortField.Type.STRING, reverse));
 				}
 			}
 
@@ -338,7 +347,7 @@ public class CRSearcher {
 					Document doc = searcher.doc(currentDoc.doc);
 					// add id field for AdvancedContentHighlighter
 					doc.add(new Field("id", hits[i].doc + "", Field.Store.YES, Field.Index.NO));
-					log.debug("adding contentid: " + doc.getFieldable("contentid"));
+					log.debug("adding contentid: " + doc.getField("contentid"));
 					log.debug("with hits[" + i + "].score = " + hits[i].score);
 					result.put(doc, hits[i].score);
 					if (explain) {
@@ -411,28 +420,27 @@ public class CRSearcher {
 			log.error("IndexAccessor is null. Search will not work.");
 		}
 
-		// Resources needed for faceted search
+		// Resource needed for faceted search
 		TaxonomyAccessor taAccessor = null;
-		TaxonomyReader taReader = null;
-		IndexReader facetsIndexReader = null;
+		
 		IndexReader uniqueMimeTypesIndexReader = null;
 		
 		List<String> uniqueMimeTypes = null;
 		if (retrieveUniqueMimeTypes) {
 			// retrieve all possible file types
-			uniqueMimeTypesIndexReader = indexAccessor.getReader(false);
-			final TermEnum termEnum = uniqueMimeTypesIndexReader.terms(new Term(LUCENE_INDEX_MIMETYPE, ""));
+			uniqueMimeTypesIndexReader = indexAccessor.getReader();
+			AtomicReader aReader = SlowCompositeReaderWrapper.wrap(uniqueMimeTypesIndexReader);
+			final Terms terms = aReader.fields().terms(LUCENE_INDEX_MIMETYPE);
+			TermsEnum termEnum = terms.iterator(null);
 			uniqueMimeTypes = new ArrayList<String>();
-			while (termEnum.next() && termEnum.term().field().equals(LUCENE_INDEX_MIMETYPE)) {
-				uniqueMimeTypes.add(termEnum.term().text());
+			while (termEnum.next() != null) {
+				uniqueMimeTypes.add(termEnum.term().utf8ToString());
 			}
 		}
 
 		// get accessors and reader only if facets are activated 
 		if (facetsSearch.useFacets()) {
-			facetsIndexReader = indexAccessor.getReader(false);
 			taAccessor = idsLocation.getTaxonomyAccessor();
-			taReader = taAccessor.getTaxonomyReader();
 		}
 
 		searcher = indexAccessor.getPrioritizedSearcher();
@@ -441,7 +449,7 @@ public class CRSearcher {
 		if (userPermissionsObject instanceof String[]) {
 			userPermissions = (String[]) userPermissionsObject;
 		}
-		TopDocsCollector<?> collector = createCollector(searcher, hits, sorting, computescores, userPermissions);
+		TopDocsCollector<?> collector = createCollector(request, searcher, hits, sorting, computescores, userPermissions);
 		
 		String filterQuery = ObjectTransformer.getString(request.get(CRRequest.FILTER_QUERY_KEY), null);
 		HashMap<String, Object> result = null;
@@ -460,6 +468,7 @@ public class CRSearcher {
 				result.put(RESULT_QUERY_KEY, parsedQuery);
 				Filter filter = null;
 				if (filterQuery != null) {
+					log.debug("Using filter query: " + filterQuery);
 					Query parsedFilterQuery = parser.parse(filterQuery);
 					parsedFilterQuery = searcher.rewrite(parsedFilterQuery);
 					filter = new QueryWrapperFilter(parsedFilterQuery);
@@ -468,7 +477,7 @@ public class CRSearcher {
 				// when facets are active create a FacetsCollector
 				FacetsCollector facetsCollector = null;
 				if (facetsSearch.useFacets()) {
-					facetsCollector = facetsSearch.createFacetsCollector(facetsIndexReader, taAccessor, taReader);
+					facetsCollector = facetsSearch.createFacetsCollector();
 				}
 
 				Map<String, Object> ret = executeSearcher(collector, searcher, parsedQuery, explain, count, start, facetsCollector, filter);
@@ -516,7 +525,8 @@ public class CRSearcher {
 							parser,
 							searcher,
 							sorting,
-							userPermissions);
+							userPermissions,
+							request);
 						result.putAll(didyoumeanResult);
 					}
 
@@ -524,7 +534,7 @@ public class CRSearcher {
 
 					// if a facetsCollector was created, store the faceted search results in the meta resolveable
 					if (facetsCollector != null) {
-						result.put(FacetsSearchConfigKeys.RESULT_FACETS_LIST_KEY, facetsSearch.getFacetsResults(facetsCollector));
+						result.put(FacetsSearchConfigKeys.RESULT_FACETS_LIST_KEY, facetsSearch.getFacetsResults(facetsCollector, taAccessor));
 					}
 
 					int size = 0;
@@ -553,14 +563,9 @@ public class CRSearcher {
 			  * Always cleanup/release the taxonomy Reader/Writer 
 			  * before the Reader/Writers of the main index!
 			  */
-			if (taAccessor != null && taReader != null) {
-				taAccessor.release(taReader);
-			}
-			if (facetsIndexReader != null) {
-				indexAccessor.release(facetsIndexReader, false);
-			}
+			
 			if (uniqueMimeTypesIndexReader != null) {
-				indexAccessor.release(uniqueMimeTypesIndexReader, false);
+				indexAccessor.release(uniqueMimeTypesIndexReader);
 			}
 			indexAccessor.release(searcher);
 		}
@@ -580,13 +585,13 @@ public class CRSearcher {
 	 * @return Map containing the replacement for the searchterm and the result for the resulting query.
 	 */
 	private HashMap<String, Object> didyoumean(final String originalQuery, final Query parsedQuery, final IndexAccessor indexAccessor,
-			final QueryParser parser, final IndexSearcher searcher, final String[] sorting, final String[] userPermissions) {
+			final QueryParser parser, final IndexSearcher searcher, final String[] sorting, final String[] userPermissions, final CRRequest request) {
 		long dymStart = System.currentTimeMillis();
 		HashMap<String, Object> result = new HashMap<String, Object>(3);
 
 		IndexReader reader = null;
 		try {
-			reader = indexAccessor.getReader(false);
+			reader = indexAccessor.getReader();
 			Query rwQuery = parsedQuery;
 			Set<Term> termset = new HashSet<Term>();
 			rwQuery.extractTerms(termset);
@@ -627,7 +632,7 @@ public class CRSearcher {
 						for (Term suggestedTerm : suggestionsForTerm) {
 							Query newquery = BooleanQueryRewriter.replaceTerm(rwQuery, term, suggestedTerm);
 
-							HashMap<String, Object> resultOfNewQuery = getResultsForQuery(newquery, searcher, sorting, userPermissions);
+							HashMap<String, Object> resultOfNewQuery = getResultsForQuery(newquery, searcher, sorting, userPermissions, request);
 							if (resultOfNewQuery != null) {
 								resultOfNewQuery.put(RESULT_SUGGESTEDTERM_KEY, suggestedTerm.text());
 								resultOfNewQuery.put(RESULT_ORIGTERM_KEY, term.text());
@@ -641,7 +646,7 @@ public class CRSearcher {
 						result.put(RESULT_BESTQUERY_KEY, suggestionsResults);
 					} else {
 						Query newquery = BooleanQueryRewriter.replaceTerm(rwQuery, term, suggestionsForTerm[0]);
-						HashMap<String, Object> resultOfNewQuery = getResultsForQuery(newquery, searcher, sorting, userPermissions);
+						HashMap<String, Object> resultOfNewQuery = getResultsForQuery(newquery, searcher, sorting, userPermissions, request);
 						result.putAll(resultOfNewQuery);
 					}
 				}
@@ -652,17 +657,17 @@ public class CRSearcher {
 			log.error("Cannot access index for didyoumean functionality.", e);
 		} finally {
 			if (indexAccessor != null && reader != null) {
-				indexAccessor.release(reader, false);
+				indexAccessor.release(reader);
 			}
 		}
 		return null;
 	}
 
 	private HashMap<String, Object> getResultsForQuery(final Query query, final IndexSearcher searcher, final String[] sorting,
-			final String[] userPermissions) {
+			final String[] userPermissions, final CRRequest request) {
 		HashMap<String, Object> result = new HashMap<String, Object>(3);
 		try {
-			TopDocsCollector<?> bestcollector = createCollector(searcher, 1, sorting, computescores, userPermissions);
+			TopDocsCollector<?> bestcollector = createCollector(request, searcher, 1, sorting, computescores, userPermissions);
 			executeSearcher(bestcollector, searcher, query, false, 1, 0);
 			result.put(RESULT_BESTQUERY_KEY, query);
 			result.put(RESULT_BESTQUERYHITS_KEY, bestcollector.getTotalHits());

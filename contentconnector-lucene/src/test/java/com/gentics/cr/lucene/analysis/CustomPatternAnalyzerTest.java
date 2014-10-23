@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.junit.Test;
@@ -17,18 +18,11 @@ public class CustomPatternAnalyzerTest {
 		GenericConfiguration config = new GenericConfiguration();
 		config.set("pattern", "\\s+");
 		config.set("lowercase", "false");
-		CustomPatternAnalyzer a = new CustomPatternAnalyzer(config);
-		
+		Analyzer a = new CustomPatternAnalyzer(config);
+	
 		TokenStream tokenStream = a.tokenStream("test", "this is a Text with Whitespaces");
-		CharTermAttribute charTermAttribute = tokenStream.addAttribute(CharTermAttribute.class);
-
-		tokenStream.incrementToken();
-		String t2 = charTermAttribute.toString();
-		tokenStream.incrementToken();
-		String t3 = charTermAttribute.toString();
+		BasicAnalyzerTestHelper.assertTokenStreamContents(tokenStream, new String[]{"Text","Whitespaces"});
 		
-		assertEquals("Second Token did not match!", "Text", t2);
-		assertEquals("Third Token did not match!", "Whitespaces", t3);
 		
 	}
 	
@@ -40,15 +34,8 @@ public class CustomPatternAnalyzerTest {
 		CustomPatternAnalyzer a = new CustomPatternAnalyzer(config);
 		
 		TokenStream tokenStream = a.tokenStream("test", "this is a Text with Whitespaces");
-		CharTermAttribute charTermAttribute = tokenStream.addAttribute(CharTermAttribute.class);
-
-		tokenStream.incrementToken();
-		String t2 = charTermAttribute.toString();
-		tokenStream.incrementToken();
-		String t3 = charTermAttribute.toString();
+		BasicAnalyzerTestHelper.assertTokenStreamContents(tokenStream, new String[]{"text","whitespaces"});
 		
-		assertEquals("Second Token did not match!", "text", t2);
-		assertEquals("Third Token did not match!", "whitespaces", t3);
 		
 	}
 	
@@ -59,15 +46,8 @@ public class CustomPatternAnalyzerTest {
 		CustomPatternAnalyzer a = new CustomPatternAnalyzer(config);
 		
 		TokenStream tokenStream = a.tokenStream("test", "this is a Text with Whitespaces");
-		CharTermAttribute charTermAttribute = tokenStream.addAttribute(CharTermAttribute.class);
-
-		tokenStream.incrementToken();
-		String t2 = charTermAttribute.toString();
-		tokenStream.incrementToken();
-		String t3 = charTermAttribute.toString();
+		BasicAnalyzerTestHelper.assertTokenStreamContents(tokenStream, new String[]{"text","whitespaces"});
 		
-		assertEquals("Second Token did not match!", "text", t2);
-		assertEquals("Third Token did not match!", "whitespaces", t3);
 		
 	}
 }
