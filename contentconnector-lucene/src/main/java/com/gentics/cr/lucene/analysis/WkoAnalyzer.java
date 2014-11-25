@@ -4,9 +4,10 @@ import java.io.IOException;
 import java.io.Reader;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.LowerCaseFilter;
+import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 
@@ -15,11 +16,12 @@ import com.gentics.cr.lucene.LuceneVersion;
 public class WkoAnalyzer extends Analyzer {
 
 	@Override
-	public TokenStream tokenStream(String fieldName, Reader reader) {
+	protected TokenStreamComponents createComponents(String fieldName, Reader reader) {
+		final Tokenizer source = new StandardTokenizer(LuceneVersion.getVersion(), reader);
 		TokenStream ts = new StandardTokenizer(LuceneVersion.getVersion(), reader);
 		ts = new LowerCaseFilter(LuceneVersion.getVersion(), ts);
 		ts = new GermanNormalizationFilterAdapted(ts);
-		return ts;
+		return new TokenStreamComponents(source,ts);
 	}
 
 	public final class GermanNormalizationFilterAdapted extends TokenFilter {
