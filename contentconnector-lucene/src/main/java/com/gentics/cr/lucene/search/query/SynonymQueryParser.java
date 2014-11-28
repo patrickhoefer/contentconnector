@@ -229,6 +229,7 @@ public class SynonymQueryParser extends CRQueryParser {
 
 			Iterator<QueryElement> it = searchedTerms.iterator();
 			String queryString = "";
+			boolean proceed = true;
 			while (it.hasNext()) {
 				String searchTerm = it.next().getSearchTerm();
 				try {
@@ -252,45 +253,46 @@ public class SynonymQueryParser extends CRQueryParser {
 					}
 
 				} catch (ParseException e) {
-					e.printStackTrace();
 					log.debug(
 							"Error while parsing query for accessing the synonym Index.",
 							e);
-					return query;
+					proceed = false;
 				}
 			}
 
-			Iterator<QueryElement> it2 = searchedTerms.iterator();
-
-			log.debug(query);
-			while (it2.hasNext()) {
-				QueryElement queryElement = it2.next();
-				log.debug(queryElement.toString());
-				String searchAttribute = queryElement.getSearchAttribute();
-				String searchTerm = queryElement.getSearchTerm();
-				log.debug("search for: "+searchTerm+"---");
-				HashSet<String> synonyms = synonymlookup.get(searchTerm);
-				log.debug(synonyms.size());
-				if (synonyms != null && synonyms.size() > 0) {
-					String queryadd = "";
-					Iterator<String> it3 = synonyms.iterator();
-					while (it3.hasNext()) {
-						queryadd = " OR " + searchAttribute + ":" + it3.next()
-								+ "";
+			if(proceed){
+				Iterator<QueryElement> it2 = searchedTerms.iterator();
+	
+				log.debug(query);
+				while (it2.hasNext()) {
+					QueryElement queryElement = it2.next();
+					log.debug(queryElement.toString());
+					String searchAttribute = queryElement.getSearchAttribute();
+					String searchTerm = queryElement.getSearchTerm();
+					log.debug("search for: "+searchTerm+"---");
+					HashSet<String> synonyms = synonymlookup.get(searchTerm);
+					log.debug(synonyms.size());
+					if (synonyms != null && synonyms.size() > 0) {
+						String queryadd = "";
+						Iterator<String> it3 = synonyms.iterator();
+						while (it3.hasNext()) {
+							queryadd = " OR " + searchAttribute + ":" + it3.next()
+									+ "";
+						}
+						String regex = "([+( ])"+Pattern.quote(queryElement.toString());
+										
+						log.debug("regex -- "+regex);
+						log.debug("befor -- "+query);
+						query = query.replaceAll(regex, "$1("
+								+ queryElement.toString() + queryadd + ")");
+						log.debug("after -- "+query);
+						
 					}
-					String regex = "([+( ])"+Pattern.quote(queryElement.toString());
-									
-					log.debug("regex -- "+regex);
-					log.debug("befor -- "+query);
-					query = query.replaceAll(regex, "$1("
-							+ queryElement.toString() + queryadd + ")");
-					log.debug("after -- "+query);
-					
+	
 				}
-
+	
+				log.debug("Synonym QueryParser Result Query: " + query);
 			}
-
-			log.debug("Synonym QueryParser Result Query: " + query);
 		} catch (Exception e) {
 			return query;
 		} finally {

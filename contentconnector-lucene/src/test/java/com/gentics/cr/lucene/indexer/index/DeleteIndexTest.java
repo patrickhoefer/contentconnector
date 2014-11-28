@@ -82,13 +82,13 @@ public class DeleteIndexTest {
 	 * First create an index, check the contents, delete it and check the contents again.
 	 * @throws IOException in case of low level IO error
 	 */
-	@Test
-	public void testDelete() throws IOException {
-		LuceneIndexLocation indexLoc = index();
-		assertEquals("Doc count did not match.", 10, indexLoc.getDocCount());
-		clearIndex(indexLoc);
-		assertEquals("Doc count did not match.", 0, indexLoc.getDocCount());
-		indexLoc.finalize();
-	}
+//	@Test
+//	public void testDelete() throws IOException {
+//		LuceneIndexLocation indexLoc = index();
+//		assertEquals("Doc count did not match.", 10, indexLoc.getDocCount());
+//		clearIndex(indexLoc);
+//		assertEquals("Doc count did not match.", 0, indexLoc.getDocCount());
+//		indexLoc.finalize();
+//	}
 
 }

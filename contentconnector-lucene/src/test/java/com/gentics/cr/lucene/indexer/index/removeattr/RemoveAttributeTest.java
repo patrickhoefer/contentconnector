@@ -63,7 +63,7 @@ public class RemoveAttributeTest {
 			ic.stop();
 			ic = null;
 		}
-		FileUtils.deleteDirectory(temp);
+//		FileUtils.deleteDirectory(temp);
 	}
 
 	private static void copyFilesToTemp(File restDir, String[] filenames) throws IOException, URISyntaxException {
