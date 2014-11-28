@@ -103,17 +103,20 @@ public class SynonymQueryParser extends CRQueryParser {
 		crQuery = addWildcardsForWordmatchParameter(crQuery);
 		crQuery = replaceSpecialCharactersFromQuery(crQuery);
 
-		Query resultQuery = childQueryParser.parse(crQuery);
-
 		try {
+			Query resultQuery = childQueryParser.parse(crQuery);
+		
 			resultQuery = childQueryParser.parse(includeSynonyms(super.parse(
 					crQuery).toString()));
+			
+			return resultQuery;
 		} catch (IOException e) {
 			log.debug("Error while adding synonyms to query.", e);
+		} catch (ParseException e){
+			log.debug("Error while parsing query");
 		}
-
-		return resultQuery;
-
+		
+		return super.parse(crQuery);
 	}
 
 	public void fetchSynonymsFromIndex(IndexSearcher synonymSearcher,

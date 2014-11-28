@@ -8,6 +8,7 @@ import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
+import org.apache.lucene.analysis.standard.StandardFilter;
 import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 
@@ -18,7 +19,7 @@ public class WkoAnalyzer extends Analyzer {
 	@Override
 	protected TokenStreamComponents createComponents(String fieldName, Reader reader) {
 		final Tokenizer source = new StandardTokenizer(LuceneVersion.getVersion(), reader);
-		TokenStream ts = new StandardTokenizer(LuceneVersion.getVersion(), reader);
+		TokenStream ts = new StandardFilter(LuceneVersion.getVersion(), source);
 		ts = new LowerCaseFilter(LuceneVersion.getVersion(), ts);
 		ts = new GermanNormalizationFilterAdapted(ts);
 		return new TokenStreamComponents(source,ts);
