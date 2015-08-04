@@ -279,7 +279,8 @@ public class SynonymQueryParser extends CRQueryParser {
 						String queryadd = "";
 						Iterator<String> it3 = synonyms.iterator();
 						while (it3.hasNext()) {
-							queryadd = " OR " + searchAttribute + ":" + it3.next()
+							log.debug("inside queryadd");
+							queryadd += " OR " + searchAttribute + ":" + it3.next()
 									+ "";
 						}
 						String regex = "([+( ])"+Pattern.quote(queryElement.toString());
