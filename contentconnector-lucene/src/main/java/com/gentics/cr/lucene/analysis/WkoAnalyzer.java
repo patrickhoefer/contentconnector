@@ -41,6 +41,7 @@ public class WkoAnalyzer extends Analyzer {
 					final char c = buffer[i];
 					switch(c) {
 					case 'ß':
+						System.out.println("found scharfes s");
 						buffer[i++] = 's';
 						buffer = termAtt.resizeBuffer(1 + length);
 						if (i < length) {
@@ -57,6 +58,18 @@ public class WkoAnalyzer extends Analyzer {
 						} 
 						buffer[i] = 'a';
 						length++;
+						break;
+					case '\'':
+						System.out.println("found einfaches hochkomma");
+						//<><
+						buffer = termAtt.resizeBuffer(2 + length);
+						buffer[i+1] = '>';
+						buffer[i+2] = '<';						
+						if (i < length) {
+							System.arraycopy(buffer, i, buffer, i + 2, (length - i));
+						} 
+						buffer[i] = '<';
+						length=length+2;
 						break;
 					default:
 					}
