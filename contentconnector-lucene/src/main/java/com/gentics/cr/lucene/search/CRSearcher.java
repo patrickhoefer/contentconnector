@@ -598,8 +598,9 @@ public class CRSearcher {
 
 			Map<Term, Term[]> suggestions = this.didyoumeanprovider.getSuggestionTerms(termset, this.didyoumeansuggestcount, reader);
 			boolean containswildcards = originalQuery.indexOf('*') != -1;
+			
 			if (suggestions.size() == 0 && containswildcards) {
-				String newSuggestionQuery = originalQuery.replaceAll(":\\*?([^*]*)\\*?", ":$1");
+				String newSuggestionQuery = originalQuery.replaceAll("\\*", "");
 				try {
 					rwQuery = parser.parse(newSuggestionQuery);
 					termset = new HashSet<Term>();
