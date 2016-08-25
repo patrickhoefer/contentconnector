@@ -62,7 +62,7 @@ public class WkoAnalyzer extends StopwordAnalyzerBase {
 		TokenStream ts = new StandardFilter(LuceneVersion.getVersion(), source);
 		ts = new LowerCaseFilter(LuceneVersion.getVersion(), ts);
 		ts = new GermanNormalizationFilterAdapted(ts);
-		ts = new StopFilter(LuceneVersion.getVersion(), ts, stopwords);
+		ts = new StopFilterWKO(LuceneVersion.getVersion(), ts, stopwords);
 		return new TokenStreamComponents(source,ts);
 	}
 
