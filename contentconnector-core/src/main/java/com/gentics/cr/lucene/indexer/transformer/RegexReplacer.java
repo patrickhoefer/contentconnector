@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 import com.gentics.cr.CRResolvableBean;
 import com.gentics.cr.configuration.GenericConfiguration;
 import com.gentics.cr.util.CRUtil;
+import org.apache.log4j.Logger;
 
 /**
  * Regex Replacing within the content can be quite costful in terms of performance.
@@ -26,7 +27,9 @@ public class RegexReplacer extends ContentTransformer {
 	private String pattern = "(?s)(<!--[ \t\n\r]*noindexstart[^>]*-->.*?<!--[ \t\n\r]*noindexend[^>]*-->)";
 	private String replacement = "";
 	private Pattern cPattern = null;
-
+	
+	private static final Logger LOGGER = Logger.getLogger(RegexReplacer.class);
+	
 	/**
 	 * Create Instance of CommentSectionStripper
 	 * if the pattern is not configured in the config: the default pattern

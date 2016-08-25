@@ -145,6 +145,22 @@ public final class LuceneAnalyzerFactory {
 				}
 			}
 		}
+		
+		if(analyzerMap != null){
+            if(analyzerMap.size() > 0){
+                for (String fieldname : analyzerMap.keySet()){
+                    LOGGER.error(fieldname);
+                    LOGGER.error(analyzerMap.get(fieldname).getClass().getName());
+                }
+            }
+            else{
+                LOGGER.error("analyzermap is empty");
+            }
+        }
+        else{
+            LOGGER.error("analyzermap is null");
+        }
+		
 		return new PerFieldAnalyzerWrapper(createDefaultAnalyzer(config), analyzerMap);
 	}
 

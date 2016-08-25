@@ -455,15 +455,13 @@ public class CRSearcher {
 		HashMap<String, Object> result = null;
 		try {
 			analyzer = LuceneAnalyzerFactory.createAnalyzer(config);
-
 			if (searchedAttributes != null && searchedAttributes.length > 0 && query != null && !query.equals("")) {
 				QueryParser parser = CRQueryParserFactory.getConfiguredParser(searchedAttributes, analyzer, request, config);
-
+				
 				Query parsedQuery = parser.parse(query);
 				// GENERATE A NATIVE QUERY
-
+				
 				parsedQuery = searcher.rewrite(parsedQuery);
-
 				result = new HashMap<String, Object>(3);
 				result.put(RESULT_QUERY_KEY, parsedQuery);
 				Filter filter = null;

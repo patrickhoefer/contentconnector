@@ -11,11 +11,22 @@ import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.standard.StandardFilter;
 import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import com.gentics.cr.configuration.GenericConfiguration;
 
 import com.gentics.cr.lucene.LuceneVersion;
+import org.apache.log4j.Logger;
 
 public class WkoAnalyzer extends Analyzer {
-
+	
+	private static final Logger LOGGER = Logger.getLogger(WkoAnalyzer.class);
+	
+	public WkoAnalyzer(GenericConfiguration conf){
+		super(conf);
+	}
+	public WkoAnalyzer(){
+		super();
+	}
+	
 	@Override
 	protected TokenStreamComponents createComponents(String fieldName, Reader reader) {
 		final Tokenizer source = new StandardTokenizer(LuceneVersion.getVersion(), reader);
@@ -34,6 +45,8 @@ public class WkoAnalyzer extends Analyzer {
 
 		@Override
 		public boolean incrementToken() throws IOException {
+			
+			
 			if (input.incrementToken()) {
 				char buffer[] = termAtt.buffer();
 				int length = termAtt.length();
@@ -41,7 +54,7 @@ public class WkoAnalyzer extends Analyzer {
 					final char c = buffer[i];
 					switch(c) {
 					case 'ß':
-						System.out.println("found scharfes s");
+						// LOGGER.error("found scharfes s");
 						buffer[i++] = 's';
 						buffer = termAtt.resizeBuffer(1 + length);
 						if (i < length) {
@@ -59,18 +72,18 @@ public class WkoAnalyzer extends Analyzer {
 						buffer[i] = 'a';
 						length++;
 						break;
-					case '\'':
-						System.out.println("found einfaches hochkomma");
+					/*case '\'':
+						LOGGER.error("found einfaches hochkomma");
 						//<><
 						buffer = termAtt.resizeBuffer(2 + length);
-						buffer[i+1] = '>';
-						buffer[i+2] = '<';						
+						buffer[i+1] = '>';						
 						if (i < length) {
 							System.arraycopy(buffer, i, buffer, i + 2, (length - i));
-						} 
+						}
+						buffer[i+2] = '<';
 						buffer[i] = '<';
 						length=length+2;
-						break;
+						break;*/
 					default:
 					}
 				}

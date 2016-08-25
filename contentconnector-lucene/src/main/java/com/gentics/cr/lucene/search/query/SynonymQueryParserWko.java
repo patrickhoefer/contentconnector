@@ -95,19 +95,18 @@ public class SynonymQueryParserWko extends CRQueryParser {
 	 */
 	public final Query parse(final String query) throws ParseException {
 		String crQuery = query;
-
-		crQuery = replaceBooleanMnoGoSearchQuery(crQuery);
+		// crQuery = replaceBooleanMnoGoSearchQuery(crQuery);
 		if (getAttributesToSearchIn().size() > getOne()) {
 			crQuery = addMultipleSearchedAttributes(crQuery);
 		}
 		crQuery = addWildcardsForWordmatchParameter(crQuery);
-		crQuery = replaceSpecialCharactersFromQuery(crQuery);
-
-		try {
-			Query resultQuery = childQueryParser.parse(crQuery);
 		
-			resultQuery = childQueryParser.parse(includeSynonyms(super.parse(
-					crQuery).toString()));
+		crQuery = replaceSpecialCharactersFromQuery(crQuery);
+		try {
+			
+			Query resultQuery = childQueryParser.parse(crQuery);
+			
+			resultQuery = childQueryParser.parse(includeSynonyms(crQuery).toString());
 			
 			return resultQuery;
 		} catch (IOException e) {

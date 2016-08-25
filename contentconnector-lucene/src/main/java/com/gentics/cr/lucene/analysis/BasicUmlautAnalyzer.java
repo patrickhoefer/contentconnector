@@ -98,6 +98,7 @@ public final class BasicUmlautAnalyzer extends Analyzer {
 				try {
 					for (int i = 0; i < length;i++) {
 						final char c = buffer[i];
+						LOG.error(c);
 						switch(c) {
 							case 'ß':
 								i = replace(new char[]{'s','z'},i,buffer,termAtt,length);

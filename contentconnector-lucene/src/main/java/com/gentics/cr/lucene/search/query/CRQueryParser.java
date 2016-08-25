@@ -81,7 +81,7 @@ public class CRQueryParser extends QueryParser {
 	public Query parse(final String query) throws ParseException {
 		String crQuery = query;
 		LOGGER.debug("parsing query: " + crQuery);
-		crQuery = replaceBooleanMnoGoSearchQuery(crQuery);
+		// crQuery = replaceBooleanMnoGoSearchQuery(crQuery);
 		if (attributesToSearchIn.size() > ONE) {
 			crQuery = addMultipleSearchedAttributes(crQuery);
 		}
